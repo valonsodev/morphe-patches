@@ -1,4 +1,87 @@
 {
-  "version": "",
-  "patches": []
+  "version": "1.0.0",
+  "patches": [
+    {
+      "name": "Disable rate limit interceptor",
+      "description": "Bypasses RateLimitInterceptor by returning chain.proceed(chain.request()).",
+      "use": true,
+      "dependencies": [],
+      "compatiblePackages": {
+        "eu.kanade.tachiyomi": null,
+        "eu.kanade.tachiyomi.debug": null,
+        "xyz.jmir.tachiyomi.mi": null,
+        "xyz.jmir.tachiyomi.mi.debug": null,
+        "tachiyomi.mangadex": null,
+        "tachiyomi.mangadex.debug": null,
+        "eu.kanade.tachiyomi.j2k": null,
+        "eu.kanade.tachiyomi.j2k.debug": null,
+        "eu.kanade.tachiyomi.sy": null,
+        "eu.kanade.tachiyomi.sy.debug": null,
+        "eu.kanade.tachiyomi.az": null,
+        "eu.kanade.tachiyomi.az.debug": null,
+        "app.mihon": null,
+        "app.mihon.debug": null,
+        "eu.kanade.tachiyomi.yokai": null,
+        "eu.kanade.tachiyomi.yokai.debug": null,
+        "eu.kanade.tachiyomi.nightlyYokai": null,
+        "xyz.luft.tachiyomi.mi": null,
+        "xyz.luft.tachiyomi.mi.debug": null,
+        "com.dark.animetailv2": null,
+        "com.dark.animetailv2.debug": null,
+        "app.komikku": null,
+        "app.komikku.beta": null,
+        "app.tachiyomi.at": null,
+        "app.tachiyomi.at.debug": null,
+        "eu.kanade.tachiyomi.s97": null,
+        "eu.kanade.tachiyomi.s97.debug": null
+      },
+      "options": []
+    },
+    {
+      "name": "Increase concurrency",
+      "description": "Multiplies Rx and Flow flatMap concurrency by 8.",
+      "use": true,
+      "dependencies": [],
+      "compatiblePackages": {
+        "eu.kanade.tachiyomi": null,
+        "eu.kanade.tachiyomi.debug": null,
+        "xyz.jmir.tachiyomi.mi": null,
+        "xyz.jmir.tachiyomi.mi.debug": null,
+        "tachiyomi.mangadex": null,
+        "tachiyomi.mangadex.debug": null,
+        "eu.kanade.tachiyomi.j2k": null,
+        "eu.kanade.tachiyomi.j2k.debug": null,
+        "eu.kanade.tachiyomi.sy": null,
+        "eu.kanade.tachiyomi.sy.debug": null,
+        "eu.kanade.tachiyomi.az": null,
+        "eu.kanade.tachiyomi.az.debug": null,
+        "app.mihon": null,
+        "app.mihon.debug": null,
+        "eu.kanade.tachiyomi.yokai": null,
+        "eu.kanade.tachiyomi.yokai.debug": null,
+        "eu.kanade.tachiyomi.nightlyYokai": null,
+        "xyz.luft.tachiyomi.mi": null,
+        "xyz.luft.tachiyomi.mi.debug": null,
+        "com.dark.animetailv2": null,
+        "com.dark.animetailv2.debug": null,
+        "app.komikku": null,
+        "app.komikku.beta": null,
+        "app.tachiyomi.at": null,
+        "app.tachiyomi.at.debug": null,
+        "eu.kanade.tachiyomi.s97": null,
+        "eu.kanade.tachiyomi.s97.debug": null
+      },
+      "options": [
+        {
+          "key": "multiplier",
+          "title": null,
+          "description": "Multiplier for Rx and Flow flatMap concurrency. Must be between 1 and 127.",
+          "required": false,
+          "type": "kotlin.Int",
+          "default": 8,
+          "values": null
+        }
+      ]
+    }
+  ]
 }
