@@ -3,6 +3,7 @@ package app.template.patches.sunny
 import app.morphe.patcher.extensions.InstructionExtensions.addInstructions
 import app.morphe.patcher.extensions.InstructionExtensions.removeInstructions
 import app.morphe.patcher.util.proxy.mutableTypes.MutableMethod
+import com.android.tools.smali.dexlib2.builder.MutableMethodImplementation
 
 internal val sunnyCompatiblePackages = arrayOf(
     "eu.kanade.tachiyomi",
@@ -37,7 +38,33 @@ internal val sunnyCompatiblePackages = arrayOf(
 internal fun MutableMethod.replaceBody(instructions: String) {
     val implementation = implementation ?: error("Target method has no implementation")
     implementation.removeInstructions(implementation.instructions.size)
+    implementation.clearExceptionMetadata()
     addInstructions(0, instructions)
+}
+
+private fun MutableMethodImplementation.clearExceptionMetadata() {
+    val implementationClass = MutableMethodImplementation::class.java
+
+    @Suppress("UNCHECKED_CAST")
+    val tryBlocks =
+        implementationClass
+            .getDeclaredField("tryBlocks")
+            .apply { isAccessible = true }
+            .get(this) as MutableList<Any>
+    tryBlocks.clear()
+
+    @Suppress("UNCHECKED_CAST")
+    val instructionLocations =
+        implementationClass
+            .getDeclaredField("instructionList")
+            .apply { isAccessible = true }
+            .get(this) as Iterable<Any>
+
+    instructionLocations.forEach { location ->
+        @Suppress("UNCHECKED_CAST")
+        val debugItems = location.javaClass.getMethod("getDebugItems").invoke(location) as MutableSet<Any>
+        debugItems.clear()
+    }
 }
 
 internal fun MutableMethod.multiplyIntParameter(
