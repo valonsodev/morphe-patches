@@ -1,3 +1,10 @@
+# [1.1.0](https://github.com/valonsodev/patches/compare/v1.0.1...v1.1.0) (2026-03-03)
+
+
+### Features
+
+* add music patch ([57cdc45](https://github.com/valonsodev/patches/commit/57cdc45b490d3081fdfce26074a3d0f805435cff))
+
 ## [1.0.1](https://github.com/valonsodev/patches/compare/v1.0.0...v1.0.1) (2026-03-02)
 
 
