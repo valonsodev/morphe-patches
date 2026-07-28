@@ -17,14 +17,7 @@
           "signatures": null,
           "targets": [
             {
-              "version": "6.24.2+v15.5.0.300-allAbis",
-              "versionCodes": null,
-              "isExperimental": false,
-              "minSdk": null,
-              "description": null
-            },
-            {
-              "version": "6.24.4+v16.0.0.103-allAbis",
+              "version": null,
               "versionCodes": null,
               "isExperimental": false,
               "minSdk": null,
@@ -520,14 +513,7 @@
           "signatures": null,
           "targets": [
             {
-              "version": "6.24.2+v15.5.0.300-allAbis",
-              "versionCodes": null,
-              "isExperimental": false,
-              "minSdk": null,
-              "description": null
-            },
-            {
-              "version": "6.24.4+v16.0.0.103-allAbis",
+              "version": null,
               "versionCodes": null,
               "isExperimental": false,
               "minSdk": null,
