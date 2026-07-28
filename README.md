@@ -10,11 +10,6 @@ Morphe patches for Android TV applications.
 <summary>📦 Prime Video&nbsp;&nbsp;•&nbsp;&nbsp;2 patches</summary>
 <br>
 
-**🎯 Supported versions:**
-
-| 6.24.2+v15.5.0.300-allAbis | 6.24.4+v16.0.0.103-allAbis |
-| :---: | :---: |
-
 | 💊&nbsp;Patch | 📜&nbsp;Description | ⚙️&nbsp;Options |
 |----------|----------------|-----------|
 | [Clone Prime Video](#clone-prime-video) | Installs patched Prime Video as a separate .mod app alongside a non-removable system installation. The clone has separate app data and login. |  |
@@ -308,25 +303,10 @@ Or use the Morphe source link:
 https://morphe.software/add-source?github=valonsodev/morphe-patches
 ```
 
-The Prime Video `Remove ads` patch currently supports:
-
-```text
-com.amazon.amazonvideo.livingroom
-6.24.2+v15.5.0.300-allAbis
-6.24.4+v16.0.0.103-allAbis
-APKM
-```
-
-The optional `Clone Prime Video` patch installs the patched application under
-the `.mod` package suffix so it can coexist with a non-removable system copy.
-The clone has separate application data and therefore requires its own login.
-
 ## Credits
 
 The `Clone Prime Video` patch is adapted from
 [ajstrick81/morphe-androidtv-patches](https://github.com/ajstrick81/morphe-androidtv-patches).
-Thanks to ajstrick81 and the repository contributors for the original
-package, provider-authority, and custom-permission rewrite.
 
 ## Build
 
