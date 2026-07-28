@@ -131,3 +131,13 @@ node_modules/
 local.properties
 .zig-cache/
 zig-out/
+
+# Local patch-tools workspace
+/.patch-tools.sock
+/AGENTS.md
+/main.kts
+/decompiled/
+/patches/bin/
+
+# Kotlin compiler cache
+/.kotlin/
