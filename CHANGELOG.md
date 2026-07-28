@@ -1,3 +1,9 @@
+## [1.1.1](https://github.com/valonsodev/morphe-patches/compare/v1.1.0...v1.1.1) (2026-07-28)
+
+### 🐛 Bug Fixes
+
+* support all Prime Video versions ([15d1fff](https://github.com/valonsodev/morphe-patches/commit/15d1fffacaf39eed9c53726c37c8c2c5bcb96ab5))
+
 ## [1.1.0](https://github.com/valonsodev/morphe-patches/compare/v1.0.0...v1.1.0) (2026-07-28)
 
 ### ✨ New Features
