@@ -5,8 +5,22 @@ Morphe patches for Android TV applications.
 ## Patches
 
 <!-- PATCHES_START EXPANDED -->
+> **[v1.0.0](https://github.com/valonsodev/morphe-patches/releases/tag/v1.0.0)**&nbsp;&nbsp;•&nbsp;&nbsp;`main`&nbsp;&nbsp;•&nbsp;&nbsp;2 patches total
+<details open>
+<summary>📦 Prime Video&nbsp;&nbsp;•&nbsp;&nbsp;2 patches</summary>
+<br>
 
-The release workflow generates this section from `patches-list.json`.
+**🎯 Supported versions:**
+
+| 6.24.2+v15.5.0.300-allAbis | 6.24.4+v16.0.0.103-allAbis |
+| :---: | :---: |
+
+| 💊&nbsp;Patch | 📜&nbsp;Description | ⚙️&nbsp;Options |
+|----------|----------------|-----------|
+| [Clone Prime Video](#clone-prime-video) | Installs patched Prime Video as a separate .mod app alongside a non-removable system installation. The clone has separate app data and login. |  |
+| [Remove ads](#remove-ads) | Removes Prime Video VOD ad descriptors, pause ads, and non-linear ads. |  |
+
+</details>
 
 <!-- PATCHES_END -->
 
