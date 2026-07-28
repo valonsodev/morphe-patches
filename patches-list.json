@@ -1,5 +1,74 @@
 {
   "NOTE": "Do NOT manually edit this file. This file is automatically updated when semantic release (release.yml) runs. Manually editing this file can break your releases and break third party tools that use this file.",
-  "version": "0.0.0",
-  "patches": []
+  "version": "1.0.0",
+  "patches": [
+    {
+      "name": "Clone Prime Video",
+      "description": "Installs patched Prime Video as a separate .mod app alongside a non-removable system installation. The clone has separate app data and login.",
+      "default": false,
+      "dependencies": [],
+      "compatiblePackages": [
+        {
+          "packageName": "com.amazon.amazonvideo.livingroom",
+          "name": "Prime Video",
+          "description": null,
+          "apkFileType": "APKM",
+          "appIconColor": "#00A8E1",
+          "signatures": null,
+          "targets": [
+            {
+              "version": "6.24.2+v15.5.0.300-allAbis",
+              "versionCodes": null,
+              "isExperimental": false,
+              "minSdk": null,
+              "description": null
+            },
+            {
+              "version": "6.24.4+v16.0.0.103-allAbis",
+              "versionCodes": null,
+              "isExperimental": false,
+              "minSdk": null,
+              "description": null
+            }
+          ]
+        }
+      ],
+      "options": []
+    },
+    {
+      "name": "Remove ads",
+      "description": "Removes Prime Video VOD ad descriptors, pause ads, and non-linear ads.",
+      "default": true,
+      "dependencies": [
+        "ResourcePatch"
+      ],
+      "compatiblePackages": [
+        {
+          "packageName": "com.amazon.amazonvideo.livingroom",
+          "name": "Prime Video",
+          "description": null,
+          "apkFileType": "APKM",
+          "appIconColor": "#00A8E1",
+          "signatures": null,
+          "targets": [
+            {
+              "version": "6.24.2+v15.5.0.300-allAbis",
+              "versionCodes": null,
+              "isExperimental": false,
+              "minSdk": null,
+              "description": null
+            },
+            {
+              "version": "6.24.4+v16.0.0.103-allAbis",
+              "versionCodes": null,
+              "isExperimental": false,
+              "minSdk": null,
+              "description": null
+            }
+          ]
+        }
+      ],
+      "options": []
+    }
+  ]
 }

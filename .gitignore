@@ -65,6 +65,7 @@ hs_err_pid*
 
 # CMake
 cmake-build-*/
+/native/primevideo/build-android/
 
 # Mongo Explorer plugin
 .idea/**/mongoSettings.xml
@@ -128,3 +129,5 @@ node_modules/
 # Ignore IDEA files
 .idea/
 local.properties
+.zig-cache/
+zig-out/
