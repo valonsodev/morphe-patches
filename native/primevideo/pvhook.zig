@@ -17,6 +17,7 @@ const aarch64_prs_copy_signature = [_]u8{
     0x29, 0x00, 0x80, 0x52, 0x69, 0x62, 0x00, 0x39,
 };
 const min_prs_length = 512;
+const min_regolith_length = 128;
 const max_prs_length = 262144;
 const max_playlist_items = 256;
 const max_metadata_edits = 256;
@@ -54,10 +55,17 @@ extern fn mprotect(address: *anyopaque, length: usize, protection: c_int) c_int;
 extern fn sysconf(name: c_int) isize;
 extern fn __android_log_write(priority: c_int, tag: [*:0]const u8, text: [*:0]const u8) c_int;
 
-const MemmoveFn = *const fn (
+const CopyFn = *const fn (
     destination: ?*anyopaque,
     source: ?*const anyopaque,
     length: usize,
+) callconv(.c) ?*anyopaque;
+
+const CheckedCopyFn = *const fn (
+    destination: ?*anyopaque,
+    source: ?*const anyopaque,
+    length: usize,
+    destination_length: usize,
 ) callconv(.c) ?*anyopaque;
 
 const FilterResult = struct {
@@ -70,7 +78,10 @@ const FilterResult = struct {
     modified: bool = false,
 };
 
-var real_memmove: ?MemmoveFn = null;
+var real_memcpy: ?CopyFn = null;
+var real_memmove: ?CopyFn = null;
+var real_memcpy_chk: ?CheckedCopyFn = null;
+var real_memmove_chk: ?CheckedCopyFn = null;
 var ignite_base: usize = 0;
 var prs_copy_return_address: usize = 0;
 
@@ -104,10 +115,13 @@ const ValueInfo = struct {
 
 const KeyKind = enum {
     other,
-    playlist,
+    intra_title_playlist,
+    regolith_playlist,
     pause_ads,
     non_linear_ads,
     item_type,
+    ad_delivery_session_id,
+    measurement,
 };
 
 const EditKind = enum {
@@ -132,12 +146,22 @@ const PlaylistCapture = struct {
     remote: [max_playlist_items]bool = undefined,
 };
 
+const RegolithCapture = struct {
+    found: bool = false,
+    range: JsonRange = .{ .start = 0, .end = 0 },
+    item_count: usize = 0,
+};
+
 const ParseContext = struct {
     scanner: *std.json.Scanner,
     diagnostics: *std.json.Diagnostics,
     edits: [max_metadata_edits]MetadataEdit = undefined,
     edit_count: usize = 0,
     playlist: PlaylistCapture = .{},
+    regolith: RegolithCapture = .{},
+    saw_intra_title_playlist: bool = false,
+    saw_ad_delivery_session_id: bool = false,
+    saw_measurement: bool = false,
 
     fn byteOffset(self: *const ParseContext) usize {
         return @intCast(self.diagnostics.getByteOffset());
@@ -154,13 +178,20 @@ const Analysis = struct {
     edits: [max_metadata_edits]MetadataEdit = undefined,
     edit_count: usize = 0,
     playlist: PlaylistCapture = .{},
+    regolith: RegolithCapture = .{},
+    saw_intra_title_playlist: bool = false,
+    saw_ad_delivery_session_id: bool = false,
+    saw_measurement: bool = false,
 };
 
 const key_names = [_][]const u8{
     "intraTitlePlaylist",
+    "playlist",
     "pauseAdsResolution",
     "nonLinearAds",
     "type",
+    "adDeliverySessionId",
+    "measurement",
 };
 
 fn updateStringMatches(
@@ -234,10 +265,13 @@ fn consumeStringMatching(
 fn consumeKey(scanner: *std.json.Scanner) !KeyKind {
     const match = try consumeStringMatching(scanner, &key_names) orelse return .other;
     return switch (match) {
-        0 => .playlist,
-        1 => .pause_ads,
-        2 => .non_linear_ads,
-        3 => .item_type,
+        0 => .intra_title_playlist,
+        1 => .regolith_playlist,
+        2 => .pause_ads,
+        3 => .non_linear_ads,
+        4 => .item_type,
+        5 => .ad_delivery_session_id,
+        6 => .measurement,
         else => unreachable,
     };
 }
@@ -323,14 +357,27 @@ fn parseObject(
 
         const key = try consumeKey(context.scanner);
         const value_type = try context.scanner.peekNextTokenType();
+        if (collect) {
+            switch (key) {
+                .intra_title_playlist => context.saw_intra_title_playlist = true,
+                .ad_delivery_session_id => context.saw_ad_delivery_session_id = true,
+                .measurement => context.saw_measurement = true,
+                else => {},
+            }
+        }
         const pause_target = collect and key == .pause_ads and value_type == .object_begin;
         const non_linear_target =
             collect and key == .non_linear_ads and value_type == .array_begin;
         const playlist_target =
             collect and
-            key == .playlist and
+            key == .intra_title_playlist and
             value_type == .array_begin and
             !context.playlist.found;
+        const regolith_target =
+            collect and
+            key == .regolith_playlist and
+            value_type == .array_begin and
+            !context.regolith.found;
 
         const value = try parseValue(
             context,
@@ -346,6 +393,12 @@ fn parseObject(
             try context.addEdit(.pause_ads, value.range);
         } else if (non_linear_target and value.array_items > 0) {
             try context.addEdit(.non_linear_ads, value.range);
+        } else if (regolith_target) {
+            context.regolith = .{
+                .found = true,
+                .range = value.range,
+                .item_count = value.array_items,
+            };
         }
     }
 }
@@ -416,6 +469,10 @@ fn analyzeJson(buffer: []const u8) ?Analysis {
         .edits = context.edits,
         .edit_count = context.edit_count,
         .playlist = context.playlist,
+        .regolith = context.regolith,
+        .saw_intra_title_playlist = context.saw_intra_title_playlist,
+        .saw_ad_delivery_session_id = context.saw_ad_delivery_session_id,
+        .saw_measurement = context.saw_measurement,
     };
 }
 
@@ -470,6 +527,50 @@ fn filterPrs(buffer: []u8) FilterResult {
         @memset(buffer[write..playlist.array_end], ' ');
         result.modified = true;
     }
+    return result;
+}
+
+const RegolithResult = struct {
+    found: bool = false,
+    modified: bool = false,
+    item_count: u32 = 0,
+};
+
+fn startsWithJsonObject(buffer: []const u8) bool {
+    for (buffer) |byte| {
+        if (std.ascii.isWhitespace(byte)) continue;
+        return byte == '{';
+    }
+    return false;
+}
+
+fn filterRegolith(buffer: []u8) RegolithResult {
+    var result = RegolithResult{};
+    if (buffer.len < min_regolith_length or buffer.len > max_prs_length) return result;
+    if (buffer.len >= 4096 and std.math.isPowerOfTwo(buffer.len)) return result;
+    if (!startsWithJsonObject(buffer)) return result;
+    if (std.mem.indexOf(u8, buffer, "\"playlist\"") == null or
+        std.mem.indexOf(u8, buffer, "\"adDeliverySessionId\"") == null or
+        std.mem.indexOf(u8, buffer, "\"measurement\"") == null)
+    {
+        return result;
+    }
+
+    const analysis = analyzeJson(buffer) orelse return result;
+    if (analysis.saw_intra_title_playlist or
+        !analysis.saw_ad_delivery_session_id or
+        !analysis.saw_measurement or
+        !analysis.regolith.found)
+    {
+        return result;
+    }
+
+    result.found = true;
+    result.item_count = @intCast(analysis.regolith.item_count);
+    if (analysis.regolith.item_count == 0) return result;
+
+    replaceRange(buffer, analysis.regolith.range, "[]");
+    result.modified = true;
     return result;
 }
 
@@ -659,6 +760,32 @@ fn hookImport(
     return previous;
 }
 
+fn filterRegolithCopy(destination: ?*anyopaque, length: usize) void {
+    const pointer = destination orelse return;
+    if (length < min_regolith_length or length > max_prs_length) return;
+
+    const bytes: [*]u8 = @ptrCast(pointer);
+    const filtered = filterRegolith(bytes[0..length]);
+    if (filtered.modified) {
+        logMessage(
+            android_log_info,
+            "REGOLITH_MATCH writes=1 length={d} items={d}",
+            .{ length, filtered.item_count },
+        );
+    }
+}
+
+fn proxyMemcpy(
+    destination: ?*anyopaque,
+    source: ?*const anyopaque,
+    length: usize,
+) callconv(.c) ?*anyopaque {
+    const original = real_memcpy orelse return destination;
+    const result = original(destination, source, length);
+    filterRegolithCopy(destination, length);
+    return result;
+}
+
 fn proxyMemmove(
     destination: ?*anyopaque,
     source: ?*const anyopaque,
@@ -670,6 +797,7 @@ fn proxyMemmove(
     };
     const original = real_memmove orelse return destination;
     const result = original(destination, source, length);
+    filterRegolithCopy(destination, length);
 
     if (caller == prs_copy_return_address and
         destination != null and
@@ -694,6 +822,30 @@ fn proxyMemmove(
             );
         }
     }
+    return result;
+}
+
+fn proxyMemcpyChk(
+    destination: ?*anyopaque,
+    source: ?*const anyopaque,
+    length: usize,
+    destination_length: usize,
+) callconv(.c) ?*anyopaque {
+    const original = real_memcpy_chk orelse return destination;
+    const result = original(destination, source, length, destination_length);
+    filterRegolithCopy(destination, length);
+    return result;
+}
+
+fn proxyMemmoveChk(
+    destination: ?*anyopaque,
+    source: ?*const anyopaque,
+    length: usize,
+    destination_length: usize,
+) callconv(.c) ?*anyopaque {
+    const original = real_memmove_chk orelse return destination;
+    const result = original(destination, source, length, destination_length);
+    filterRegolithCopy(destination, length);
     return result;
 }
 
@@ -733,13 +885,28 @@ fn jniOnLoad() c_int {
         return jni_err;
     };
     real_memmove = @ptrCast(@alignCast(previous));
+
+    var copy_hook_count: u32 = 1;
+    if (hookImport(ignite_library, "memcpy", @ptrCast(&proxyMemcpy))) |original| {
+        real_memcpy = @ptrCast(@alignCast(original));
+        copy_hook_count += 1;
+    }
+    if (hookImport(ignite_library, "__memcpy_chk", @ptrCast(&proxyMemcpyChk))) |original| {
+        real_memcpy_chk = @ptrCast(@alignCast(original));
+        copy_hook_count += 1;
+    }
+    if (hookImport(ignite_library, "__memmove_chk", @ptrCast(&proxyMemmoveChk))) |original| {
+        real_memmove_chk = @ptrCast(@alignCast(original));
+        copy_hook_count += 1;
+    }
+
     const caller_offset = prs_copy_return_address - ignite_base;
     const logged_caller_offset =
         if (builtin.cpu.arch == .arm) caller_offset | 1 else caller_offset;
     logMessage(
         android_log_info,
-        "installed libignite.so!memmove caller_filter=+0x{x}",
-        .{logged_caller_offset},
+        "installed copy_hooks={d}/4 PRS caller_filter=+0x{x}",
+        .{ copy_hook_count, logged_caller_offset },
     );
     return jni_version_1_6;
 }
