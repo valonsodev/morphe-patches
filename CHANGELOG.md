@@ -1,3 +1,9 @@
+## [1.3.0](https://github.com/valonsodev/morphe-patches/compare/v1.2.0...v1.3.0) (2026-08-14)
+
+### ✨ New Features
+
+* add Prime Video deep diagnostics ([0d760a1](https://github.com/valonsodev/morphe-patches/commit/0d760a1b6bdc2db29642b06985e584a8b93c81d8))
+
 ## [1.2.0](https://github.com/valonsodev/morphe-patches/compare/v1.1.1...v1.2.0) (2026-07-31)
 
 ### ✨ New Features
