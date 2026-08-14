@@ -31,6 +31,22 @@ pub fn build(b: *std.Build) void {
         "Build the Prime Video hook and update its Morphe resources",
     );
     native_step.dependOn(&update_resource.step);
+
+    const host_test_module = b.createModule(.{
+        .root_source_file = b.path("native/primevideo/pvhook.zig"),
+        .target = b.graph.host,
+        .optimize = .Debug,
+    });
+    const host_libc_stub = addStubLibrary(b, b.graph.host, "pvhook_test_c", "native/primevideo/stubs/libc.zig");
+    const host_libdl_stub = addStubLibrary(b, b.graph.host, "pvhook_test_dl", "native/primevideo/stubs/libdl.zig");
+    const host_liblog_stub = addStubLibrary(b, b.graph.host, "pvhook_test_log", "native/primevideo/stubs/liblog.zig");
+    host_test_module.addObjectFile(host_libc_stub.getEmittedBin());
+    host_test_module.addObjectFile(host_libdl_stub.getEmittedBin());
+    host_test_module.addObjectFile(host_liblog_stub.getEmittedBin());
+    const host_tests = b.addTest(.{ .root_module = host_test_module });
+    const run_host_tests = b.addRunArtifact(host_tests);
+    const test_step = b.step("test", "Run native Prime Video hook host tests");
+    test_step.dependOn(&run_host_tests.step);
     b.default_step = native_step;
 }
 
